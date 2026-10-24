@@ -1,6 +1,10 @@
+import shlex
+
 import prompt
 
-import primitive_db.db as db
+from primitive_db import core, utils
+
+DB_META_FILE = "db_meta.json"
 
 
 def print_help():
@@ -13,54 +17,77 @@ def print_help():
     print("<command> help - справочная информация\n")
 
 
-def welcome():
-    # Загружаем данные при старте
-    db.load_metadata()
-    
+def run():
     print("\n***База данных***")
     print_help()
 
     while True:
-        # Получаем строку от пользователя и убираем лишние пробелы по краям
         user_input = prompt.string(">>>Введите команду: ").strip()
-        
         if not user_input:
             continue
 
-        # Разбиваем строку на отдельные слова
-        parts = user_input.split()
+        # Загружаем актуальные метаданные перед каждой командой
+        metadata = utils.load_metadata(DB_META_FILE)
+
+        try:
+            # Надежный парсинг с помощью shlex
+            parts = shlex.split(user_input)
+        except ValueError as e:
+            print(f"Ошибка парсинга: {e}")
+            continue
+
         command = parts[0].lower()
         args = parts[1:]
 
         if command == "exit":
             print("Выход из программы.")
             break
-            
+
         elif command == "help":
             print_help()
-            
+
         elif command == "list_tables":
-            db.list_tables()
-            
+            tables = core.list_tables(metadata)
+            if not tables:
+                print("Таблиц пока нет.")
+            else:
+                for t in tables:
+                    print(f"- {t}")
+
         elif command == "create_table":
             if len(args) < 2:
-                print(
-    "Некорректное значение: недостаточно аргументов. "
-    "Попробуйте снова."
-                )
+                print("Некорректное значение: недостаточно аргументов.")
                 continue
+            
             table_name = args[0]
             columns = args[1:]
-            db.create_table(table_name, columns)
             
+            updated_metadata, error = core.create_table(metadata, table_name, columns)
+            if error:
+                print(error)
+            else:
+                utils.save_metadata(DB_META_FILE, updated_metadata)
+                # Формируем красивый вывод для пользователя
+                cols_display = ", ".join(
+                    [f"{k}:{v}" for k, v in updated_metadata[table_name].items()]
+                )
+                print(
+                    f'Таблица "{table_name}" успешно создана '
+                    f"со столбцами: {cols_display}"
+                )
+
         elif command == "drop_table":
             if len(args) != 1:
-                print(
-    "Некорректное значение: требуется одно имя таблицы. "
-    "Попробуйте снова."
-                )
+                print("Некорректное значение: требуется одно имя таблицы.")
                 continue
-            db.drop_table(args[0])
             
+            table_name = args[0]
+            updated_metadata, error = core.drop_table(metadata, table_name)
+            if error:
+                print(error)
+            else:
+                utils.save_metadata(DB_META_FILE, updated_metadata)
+                print(f'Таблица "{table_name}" успешно удалена.')
+
         else:
             print(f"Функции {command} нет. Попробуйте снова.")

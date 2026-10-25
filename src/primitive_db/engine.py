@@ -26,13 +26,13 @@ def print_help():
     )
     print("<command> delete from <имя> where <col> = <val> - удалить.")
     print("<command> info <имя_таблицы> - информация о таблице.")
-    
+
     print("\n***Процесс работы с таблицей***")
     print("Функции:")
     print("<command> create_table <имя_таблицы> <столбец1:тип> .. - создать таблицу")
     print("<command> list_tables - показать список всех таблиц")
     print("<command> drop_table <имя_таблицы> - удалить таблицу")
-    
+
     print("\nОбщие команды:")
     print("<command> exit - выход из программы")
     print("<command> help - справочная информация\n")
@@ -66,13 +66,10 @@ def run():
                 continue
 
             table_data = utils.load_table_data(table_name)
-            updated_data, error, new_id = core.insert(
+            updated_data, _, new_id = core.insert(
                 metadata, table_data, table_name, values
             )
-
-            if error:
-                print(error)
-            else:
+            if new_id is not None:
                 utils.save_table_data(table_name, updated_data)
                 print(
                     f'Запись с ID={new_id} успешно добавлена '
@@ -94,10 +91,8 @@ def run():
                 continue
             table_name = parts[1]
             columns = parts[2:]
-            updated_metadata, error = core.create_table(metadata, table_name, columns)
-            if error:
-                print(error)
-            else:
+            updated_metadata, _ = core.create_table(metadata, table_name, columns)
+            if updated_metadata is not None:
                 utils.save_metadata(DB_META_FILE, updated_metadata)
                 cols_display = ", ".join(
                     [f"{k}:{v}" for k, v in updated_metadata[table_name].items()]
@@ -120,10 +115,8 @@ def run():
                 print("Некорректное значение: требуется одно имя таблицы.")
                 continue
             table_name = parts[1]
-            updated_metadata, error = core.drop_table(metadata, table_name)
-            if error:
-                print(error)
-            else:
+            updated_metadata, _ = core.drop_table(metadata, table_name)
+            if updated_metadata is not None:
                 utils.save_metadata(DB_META_FILE, updated_metadata)
                 print(f'Таблица "{table_name}" успешно удалена.')
 
@@ -200,9 +193,11 @@ def run():
                 continue
 
             table_data = utils.load_table_data(table_name)
-            updated_data, count = core.delete(table_data, where_clause)
-            utils.save_table_data(table_name, updated_data)
-            print(f"Удалено записей: {count}.")
+            result = core.delete(table_data, where_clause)
+            if result is not None:
+                updated_data, count = result
+                utils.save_table_data(table_name, updated_data)
+                print(f"Удалено записей: {count}.")
 
         elif command == "info":
             if len(parts) != 2:
@@ -212,7 +207,6 @@ def run():
             if table_name not in metadata:
                 print(f'Ошибка: Таблица "{table_name}" не существует.')
                 continue
-            
             table_data = utils.load_table_data(table_name)
             info_str = core.get_info(metadata, table_data, table_name)
             if info_str:

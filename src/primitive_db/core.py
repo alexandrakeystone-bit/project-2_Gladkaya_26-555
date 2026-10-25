@@ -1,12 +1,10 @@
+from prettytable import PrettyTable
+
+
 def create_table(metadata, table_name, columns_list):
-    """
-    Создает таблицу в metadata.
-    Возвращает (updated_metadata, error_message_or_None).
-    """
     if table_name in metadata:
         return metadata, f'Ошибка: Таблица "{table_name}" уже существует.'
 
-    # Валидация типов данных
     parsed_columns = {}
     for col in columns_list:
         if ":" not in col:
@@ -20,7 +18,6 @@ def create_table(metadata, table_name, columns_list):
         
         parsed_columns[col_name] = col_type
 
-    # Автоматически добавляем ID в начало
     new_columns = {"ID": "int"}
     new_columns.update(parsed_columns)
 
@@ -29,10 +26,6 @@ def create_table(metadata, table_name, columns_list):
 
 
 def drop_table(metadata, table_name):
-    """
-    Удаляет таблицу из metadata.
-    Возвращает (updated_metadata, error_message_or_None).
-    """
     if table_name not in metadata:
         return metadata, f'Ошибка: Таблица "{table_name}" не существует.'
     
@@ -41,5 +34,120 @@ def drop_table(metadata, table_name):
 
 
 def list_tables(metadata):
-    """Возвращает список имен таблиц."""
     return list(metadata.keys())
+
+
+def insert(metadata, table_data, table_name, values):
+    if table_name not in metadata:
+        return table_data, f'Ошибка: Таблица "{table_name}" не существует.', None
+
+    schema = metadata[table_name]
+    col_names = list(schema.keys())[1:]  # Пропускаем ID
+    
+    # Проверка количества значений
+    if len(values) != len(col_names):
+        return (
+            table_data, 
+            f"Ошибка: неверное количество значений. "
+            f"Ожидается {len(col_names)}, получено {len(values)}.", 
+            None
+        )
+
+    parsed_values = []
+    for val_str, col_name in zip(values, col_names):
+        expected_type = schema[col_name]
+        
+        if expected_type == "int":
+            try:
+                parsed_values.append(int(val_str))
+            except ValueError:
+                return table_data, f"Неверный тип для {col_name}: ожидается int.", None
+        elif expected_type == "bool":
+            if val_str.lower() not in ["true", "false"]:
+                return table_data, f"Неверный тип для {col_name}: ожидается bool.", None
+            parsed_values.append(val_str.lower() == "true")
+        else:
+            parsed_values.append(str(val_str))
+
+    new_id = max((row["ID"] for row in table_data), default=0) + 1
+
+    new_row = {"ID": new_id}
+    for val, col_name in zip(parsed_values, col_names):
+        new_row[col_name] = val
+
+    table_data.append(new_row)
+    return table_data, None, new_id
+
+
+def select(table_data, where_clause=None):
+    if not where_clause:
+        return table_data
+
+    result = []
+    for row in table_data:
+        match = True
+        for col, val in where_clause.items():
+            if row.get(col) != val:
+                match = False
+                break
+        if match:
+            result.append(row)
+    return result
+
+
+def update(table_data, set_clause, where_clause):
+    count = 0
+    for row in table_data:
+        match = True
+        for col, val in where_clause.items():
+            if row.get(col) != val:
+                match = False
+                break
+        
+        if match:
+            row.update(set_clause)
+            count += 1
+    return table_data, count
+
+
+def delete(table_data, where_clause):
+    new_data = []
+    count = 0
+    for row in table_data:
+        match = True
+        for col, val in where_clause.items():
+            if row.get(col) != val:
+                match = False
+                break
+        
+        if match:
+            count += 1
+        else:
+            new_data.append(row)
+    return new_data, count
+
+
+def print_table(table_data):
+    if not table_data:
+        print("Данных нет.")
+        return
+
+    table = PrettyTable()
+    table.field_names = list(table_data[0].keys())
+    for row in table_data:
+        table.add_row(list(row.values()))
+    print(table)
+
+
+def get_info(metadata, table_data, table_name):
+    """Возвращает строку с информацией о таблице."""
+    if table_name not in metadata:
+        return None
+    
+    schema = metadata[table_name]
+    cols_desc = ", ".join([f"{k}:{v}" for k, v in schema.items()])
+    return (
+        f"Таблица: {table_name}\n"
+        f"Столбцы: {cols_desc}\n"
+        f"Количество записей: {len(table_data)}"
+    )

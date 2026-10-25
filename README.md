@@ -11,3 +11,6 @@
 - `help` — справка.
 - `exit` — выход.
 
+## Демонстрация работы
+
+[![Демонстрация работы Primitive DB](https://asciinema.org/a/vCtAQ4pqvXdPDzYd)

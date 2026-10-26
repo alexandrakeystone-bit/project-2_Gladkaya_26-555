@@ -1,14 +1,16 @@
+"""Модуль для запуска, игрового цикла и парсинга команд."""
+
 import re
 import shlex
 
 import prompt
 
 from primitive_db import core, parser, utils
-
-DB_META_FILE = "db_meta.json"
+from primitive_db.constants import META_FILE
 
 
 def print_help():
+    """Выводит справочное сообщение для текущего режима."""
     print("\n***Операции с данными***")
     print("Функции:")
     print(
@@ -39,6 +41,7 @@ def print_help():
 
 
 def run():
+    """Запускает основной цикл взаимодействия с пользователем."""
     print("\n***База данных***")
     print_help()
 
@@ -47,8 +50,10 @@ def run():
         if not user_input:
             continue
 
-        metadata = utils.load_metadata(DB_META_FILE)
+        # Загружаем метаданные
+        metadata = utils.load_metadata(META_FILE)
 
+        # Обработка insert (из-за скобок и кавычек)
         if user_input.lower().startswith("insert into"):
             insert_pattern = r"insert\s+into\s+(\w+)\s+values\s*\((.*)\)"
             match = re.match(insert_pattern, user_input, re.IGNORECASE)
@@ -77,6 +82,7 @@ def run():
                 )
             continue
 
+        # Обработка остальных команд через shlex
         try:
             parts = shlex.split(user_input)
         except ValueError as e:
@@ -93,7 +99,7 @@ def run():
             columns = parts[2:]
             updated_metadata, _ = core.create_table(metadata, table_name, columns)
             if updated_metadata is not None:
-                utils.save_metadata(DB_META_FILE, updated_metadata)
+                utils.save_metadata(META_FILE, updated_metadata)
                 cols_display = ", ".join(
                     [f"{k}:{v}" for k, v in updated_metadata[table_name].items()]
                 )
@@ -117,7 +123,7 @@ def run():
             table_name = parts[1]
             updated_metadata, _ = core.drop_table(metadata, table_name)
             if updated_metadata is not None:
-                utils.save_metadata(DB_META_FILE, updated_metadata)
+                utils.save_metadata(META_FILE, updated_metadata)
                 print(f'Таблица "{table_name}" успешно удалена.')
 
         elif command == "select":

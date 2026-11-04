@@ -109,10 +109,10 @@ def insert(metadata, table_data, table_name, values):
 
 @log_time
 @handle_db_errors
-def select(table_data, where_clause=None):
+def select(table_name, table_data, where_clause=None):
     """Возвращает записи, соответствующие условию (с кэшированием)."""
-    key = str(where_clause)
-
+    key = f"{table_name}_{str(where_clause)}"
+    
     def compute():
         if not where_clause:
             return table_data

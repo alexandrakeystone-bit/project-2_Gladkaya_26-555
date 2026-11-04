@@ -121,10 +121,17 @@ def run():
                 print("Некорректное значение: требуется одно имя таблицы.")
                 continue
             table_name = parts[1]
-            updated_metadata, _ = core.drop_table(metadata, table_name)
+            
+            # Сначала получаем результат, потом проверяем на None
+            result = core.drop_table(metadata, table_name)
+            if result is None:
+                continue
+            
+            updated_metadata, _ = result
             if updated_metadata is not None:
                 utils.save_metadata(META_FILE, updated_metadata)
                 print(f'Таблица "{table_name}" успешно удалена.')
+
 
         elif command == "select":
             if len(parts) < 3 or parts[1] != "from":
@@ -148,7 +155,7 @@ def run():
                     continue
 
             table_data = utils.load_table_data(table_name)
-            filtered_data = core.select(table_data, where_clause)
+            filtered_data = core.select(table_name, table_data, where_clause)
             core.print_table(filtered_data)
 
         elif command == "update":

@@ -1,5 +1,9 @@
+"""Декораторы для расширения функциональности базы данных."""
+
 import functools
 import time
+
+import prompt
 
 
 def handle_db_errors(func):
@@ -10,8 +14,8 @@ def handle_db_errors(func):
             return func(*args, **kwargs)
         except FileNotFoundError:
             print(
-    "Ошибка: Файл данных не найден. "
-    "Возможно, база данных не инициализирована."
+                "Ошибка: Файл данных не найден. "
+                "Возможно, база данных не инициализирована."
             )
         except KeyError as e:
             print(f"Ошибка: Таблица или столбец {e} не найден.")
@@ -27,7 +31,9 @@ def confirm_action(action_name):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            answer = input(f'Вы уверены, что хотите выполнить "{action_name}"? [y/n]: ')
+            answer = prompt.string(
+                f'Вы уверены, что хотите выполнить "{action_name}"? [y/n]: '
+            )
             if answer.lower() != "y":
                 print("Операция отменена.")
                 return None

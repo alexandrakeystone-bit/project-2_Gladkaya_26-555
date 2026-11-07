@@ -63,12 +63,12 @@
 ## Демонстрация работы
 Общий обзор работы базы данных:
 
-https://asciinema.org/a/TuoNeeLiyVp8Rlm6.svg
+ https://asciinema.org/a/goiW72rztCYXLpIU
 
 Демонстрация работы декораторов (запрос подтверждения):
 
-https://asciinema.org/a/i0JA4i2CGB5gAyuW.svg
-
+ https://asciinema.org/a/LuiTEfA64Fo9HGi9
+ 
 Технологии
 Python 3.12
 

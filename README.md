@@ -49,8 +49,9 @@
 Время выполнения операций insert и select логируется с помощью декоратора log_time.
 Результаты select кэшируются с помощью замыкания (create_cacher), чтобы повторные запросы выполнялись мгновенно.
 
-## Демонстрация работы
-https://asciinema.org/a/vCtAQ4pqvXdPDzYd.svg
+## Демонстрация работы 
+https://asciinema.org/a/TuoNeeLiyVp8Rlm6
+https://asciinema.org/a/i0JA4i2CGB5gAyuW
 
 ## Технологии
 Python 3.12

@@ -31,19 +31,16 @@
 
 ## Пример использования
 Создание таблицы:
-
-text
->>> Введите команду: create_table users name:str age:int is_active:bool
+```bash
+Введите команду: create_table users name:str age:int is_active:bool
 Таблица "users" успешно создана со столбцами: ID:int, name:str, age:int, is_active:bool
 Просмотр списка таблиц:
 
-text
->>> Введите команду: list_tables
+Введите команду: list_tables
 - users
 Удаление таблицы (с подтверждением):
 
-text
->>> Введите команду: drop_table users
+Введите команду: drop_table users
 Вы уверены, что хотите выполнить "удаление таблицы"? [y/n]: y
 Таблица "users" успешно удалена.
 
